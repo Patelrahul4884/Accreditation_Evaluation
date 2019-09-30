@@ -1,4 +1,6 @@
 import 'dart:math';
+import '../models/http_exception.dart';
+
 import '../Providers/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -39,38 +41,37 @@ class AuthScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Flexible(
-                    child:
-                        Container( 
-                          margin: EdgeInsets.only(bottom: 20),
-                          padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 94.0),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: Colors.deepOrange.shade900,
-                            boxShadow: [
-                              BoxShadow(
-                                blurRadius: 8,
-                                color: Colors.black26,
-                                offset: Offset(0, 2),
-                              )
-                            ],
-                          ),
-                          child: Text(
-                            'SVMIT',
-                            style: TextStyle(
-                              color:
-                                  Theme.of(context).accentTextTheme.title.color,
-                              fontSize: 50,
-                              fontFamily: 'Anton',
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
+                    child: Container(
+                      margin: EdgeInsets.only(bottom: 20),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 8.0, horizontal: 94.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.deepOrange.shade900,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 8,
+                            color: Colors.black26,
+                            offset: Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      child: Text(
+                        'SVMIT',
+                        style: TextStyle(
+                          color: Theme.of(context).accentTextTheme.title.color,
+                          fontSize: 50,
+                          fontFamily: 'Anton',
+                          fontWeight: FontWeight.normal,
                         ),
+                      ),
+                    ),
                   ),
                   Flexible(
                     flex: deviceSize.width > 600 ? 2 : 1,
                     child: AuthCard(),
                   ),
-                ],  
+                ],
               ),
             ),
           ),
@@ -99,7 +100,24 @@ class _AuthCardState extends State<AuthCard> {
   var _isLoading = false;
   final _passwordController = TextEditingController();
 
-  Future<void> _submit()async {
+  void _showErrorDialog(String message) {
+    showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+              title: Text('An error Occured!'),
+              content: Text(message),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Okay'),
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
+                )
+              ],
+            ));
+  }
+
+  Future<void> _submit() async {
     if (!_formKey.currentState.validate()) {
       // Invalid!
       return;
@@ -108,13 +126,35 @@ class _AuthCardState extends State<AuthCard> {
     setState(() {
       _isLoading = true;
     });
-    if (_authMode == AuthMode.Login) {
-      // Log user in
-      await Provider.of<Auth>(context).login(_authData['email'],_authData['password']);
-    } else {
-      // Sign user up
-      await Provider.of<Auth>(context,listen: false).signup(_authData['email'], _authData['password']);
+    try {
+      if (_authMode == AuthMode.Login) {
+        // Log user in
+        await Provider.of<Auth>(context)
+            .login(_authData['email'], _authData['password']);
+      } else {
+        // Sign user up
+        await Provider.of<Auth>(context, listen: false)
+            .signup(_authData['email'], _authData['password']);
+      }
+    } on HttpException catch (error) {
+      var errorMessage = 'Authentication failed';
+      if (error.toString().contains('EMAIL_EXISTS')) {
+        errorMessage = 'This email address is already in use.';
+      } else if (error.toString().contains('INVALID_EMAIL')) {
+        errorMessage = 'This is not valid email address.';
+      } else if (error.toString().contains('WEAK_PASSWORD')) {
+        errorMessage = 'This password is too weak.';
+      } else if (error.toString().contains('EMAIL_NOT_FOUND')) {
+        errorMessage = 'could not find user with that email.';
+      } else if (error.toString().contains('INVALID_PASSWORD')) {
+        errorMessage = 'You have entered wrong password.';
+      }
+      _showErrorDialog(errorMessage);
+    } catch (error) {
+      const errorMessage =
+          'Could not authenticate you. Please try again later!';
     }
+
     setState(() {
       _isLoading = false;
     });
@@ -153,12 +193,12 @@ class _AuthCardState extends State<AuthCard> {
               children: <Widget>[
                 TextFormField(
                   decoration: const InputDecoration(
-                      border: UnderlineInputBorder(),
-                      filled: true,
-                      icon: Icon(Icons.email),
-                      hintText: 'Your email address',
-                      labelText: 'E-mail',
-                    ),
+                    border: UnderlineInputBorder(),
+                    filled: true,
+                    icon: Icon(Icons.email),
+                    hintText: 'Your email address',
+                    labelText: 'E-mail',
+                  ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value.isEmpty || !value.contains('@')) {
@@ -170,7 +210,11 @@ class _AuthCardState extends State<AuthCard> {
                   },
                 ),
                 TextFormField(
-                  decoration: InputDecoration(labelText: 'Password',icon: Icon(Icons.lock),hintText: 'No more than 8 characters.'),
+                  decoration: InputDecoration(
+                      labelText: 'Password',
+                      filled: true,
+                      icon: Icon(Icons.lock),
+                      hintText: 'No more than 8 characters.'),
                   obscureText: true,
                   controller: _passwordController,
                   validator: (value) {
@@ -185,7 +229,8 @@ class _AuthCardState extends State<AuthCard> {
                 if (_authMode == AuthMode.Signup)
                   TextFormField(
                     enabled: _authMode == AuthMode.Signup,
-                    decoration: InputDecoration(labelText: 'Confirm Password',icon: Icon(Icons.lock)),
+                    decoration: InputDecoration(
+                        labelText: 'Confirm Password', icon: Icon(Icons.lock)),
                     obscureText: true,
                     validator: _authMode == AuthMode.Signup
                         ? (value) {
@@ -204,11 +249,11 @@ class _AuthCardState extends State<AuthCard> {
                   RaisedButton(
                     child:
                         Text(_authMode == AuthMode.Login ? 'LOGIN' : 'SIGN UP'),
-                        elevation: 8.0,
+                    elevation: 8.0,
                     onPressed: _submit,
-                  shape: const BeveledRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(7.0)),
-                      ),
+                    shape: const BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(7.0)),
+                    ),
                     padding:
                         EdgeInsets.symmetric(horizontal: 30.0, vertical: 8.0),
                     color: Theme.of(context).primaryColor,
