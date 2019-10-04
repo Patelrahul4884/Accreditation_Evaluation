@@ -4,6 +4,8 @@ import './Screens/auth_screen.dart';
 import 'package:provider/provider.dart';
 import './Providers/auth.dart';
 import './Screens/faculty_profile_Data.dart';
+import './Screens/profile_data.dart';
+import './Screens/facluty_data_overview.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -21,7 +23,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.purple,
           accentColor: Colors.deepOrange,
         ),
-        home:auth.isAuth?HomeScreen(): ProfileData(),
+        home:DataOverview(),
       ),)
       
     );
