@@ -1,7 +1,7 @@
 import 'dart:math';
 import '../models/http_exception.dart';
 
-import '../Providers/auth.dart';
+import '../providers/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

@@ -1,56 +1,59 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import '../models/profile.dart';
+import 'package:provider/provider.dart';
+import '../providers/profile.dart';
+import '../providers/profiles.dart';
 import 'package:intl/intl.dart';
 
 class DataOverview extends StatefulWidget {
-  // final List<Profile> userData=[
-  //   Profile(
-  //     id: 'u1',
-  //     name: 'Nital Mistry',
-  //     designation: 'HOD',
-  //     department: 'IT',
-  //     doj: DateTime.now(),
-  //     dob: DateTime.now(),
-  //     panN0: 'ABCD12345',
-  //     aadharNo: 000000000000,
-  //     gtustaffcode: 00000000,
-  //     mobileno: 9999999999,
-  //     localAdd: 'Surat',
-  //     perAdd: 'Surat',
-  //     bloodG: 'A+',
-
-  //   ),
-
-  // ];
   @override
   _DataOverviewState createState() => _DataOverviewState();
 }
 
 class _DataOverviewState extends State<DataOverview> {
- final _focusnode=FocusNode();
- @override
+  final _focusnode = FocusNode();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  var _editProfile = Profile(
+      id: null,
+      name: '',
+      designation: '',
+      department: '',
+      email: '',
+      doj: DateTime.now(),
+      dob: DateTime.now(),
+      panN0: '',
+      aadharNo: null,
+      gtustaffcode: null,
+      mobileno: null,
+      localAdd: '',
+      perAdd: '');
+  @override
   void dispose() {
     _focusnode.dispose();
     super.dispose();
   }
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-void showInSnackBar(String value) {
+
+  void showInSnackBar(String value) {
     _scaffoldKey.currentState.showSnackBar(SnackBar(
       content: Text(value),
     ));
   }
-final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   bool _autovalidate = false;
   bool _formWasEdited = false;
- void _handleSubmitted() {
+  void _handleSubmitted() {
     final FormState form = _formKey.currentState;
     if (!form.validate()) {
       _autovalidate = true; // Start validating on every change.
       showInSnackBar('Please fix the errors in red before submitting.');
-    } 
+    } else {
+      form.save();
+      Provider.of<Profiles>(context, listen: false).addProfile(_editProfile);
+    }
   }
-String _validateName(String value) {
+
+  String _validateName(String value) {
     _formWasEdited = true;
     if (value.isEmpty) return 'Name is required.';
     final RegExp nameExp = RegExp(r'^[A-Za-z ]+$');
@@ -58,24 +61,27 @@ String _validateName(String value) {
       return 'Please enter only alphabetical characters.';
     return null;
   }
+
   String _validatePhoneNumber(String value) {
     _formWasEdited = true;
-    if (value.length!=10)
-      return 'Phone number must be of 10 digits.';
+    if (value.length != 10) return 'Phone number must be of 10 digits.';
     return null;
   }
+
   String _validateEmail(String value) {
-    String pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+    String pattern =
+        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
     RegExp regExp = new RegExp(pattern);
     if (value.length == 0) {
       return "Email is Required";
-    } else if(!regExp.hasMatch(value)){
+    } else if (!regExp.hasMatch(value)) {
       return "Invalid Email";
-    }else {
+    } else {
       return null;
     }
   }
- Future<bool> _warnUserAboutInvalidData() async {
+
+  Future<bool> _warnUserAboutInvalidData() async {
     final FormState form = _formKey.currentState;
     if (form == null || !_formWasEdited || form.validate()) return true;
 
@@ -104,19 +110,7 @@ String _validateName(String value) {
         ) ??
         false;
   }
-String id;
-   String _name;
-   String _email;
-   String _designation;
-   String _department;
-   DateTime _doj;
-   DateTime _dob;
-   String _panN0;
-   String _aadharNo;
-   String _gtustaffcode;
-   String _phoneno;
-   String _localAdd;
-   String _perAdd;
+
   static const designation = <String>[
     'Ass. Prof.',
     'HOD',
@@ -155,6 +149,21 @@ String id;
         .then((pickedDate) {
       if (pickedDate == null) {
         return Text('Please Select Date');
+      } else {
+        _editProfile = Profile(
+            id: null,
+            name: _editProfile.name,
+            designation: _editProfile.designation,
+            department: _editProfile.department,
+            email: _editProfile.email,
+            doj: pickedDate,
+            dob: _editProfile.dob,
+            panN0: _editProfile.panN0,
+            aadharNo: _editProfile.aadharNo,
+            gtustaffcode: _editProfile.gtustaffcode,
+            mobileno: _editProfile.mobileno,
+            localAdd: _editProfile.localAdd,
+            perAdd: _editProfile.perAdd);
       }
       setState(() {
         _selectedDate = pickedDate;
@@ -190,20 +199,32 @@ String id;
                 children: <Widget>[
                   const SizedBox(height: 24.0),
                   TextFormField(
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        border: UnderlineInputBorder(),
-                        filled: true,
-                        icon: Icon(Icons.person),
-                        hintText: 'What do people call you?',
-                        labelText: 'Name *',
-                      ),
-                      onSaved: (String value) {
-                      _name = value;
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      border: UnderlineInputBorder(),
+                      filled: true,
+                      icon: Icon(Icons.person),
+                      hintText: 'What do people call you?',
+                      labelText: 'Name *',
+                    ),
+                    onSaved: (value) {
+                      _editProfile = Profile(
+                          id: null,
+                          name: value,
+                          designation: _editProfile.designation,
+                          department: _editProfile.department,
+                          email: _editProfile.email,
+                          doj: _editProfile.doj,
+                          dob: _editProfile.dob,
+                          panN0: _editProfile.panN0,
+                          aadharNo: _editProfile.aadharNo,
+                          gtustaffcode: _editProfile.gtustaffcode,
+                          mobileno: _editProfile.mobileno,
+                          localAdd: _editProfile.localAdd,
+                          perAdd: _editProfile.perAdd);
                     },
                     validator: _validateName,
-                      ),
-                
+                  ),
                   const SizedBox(height: 24.0),
                   Row(
                     children: <Widget>[
@@ -232,7 +253,7 @@ String id;
                       const SizedBox(width: 40.0),
                       Icon(Icons.calendar_today),
                       const SizedBox(width: 15.0),
-                       Container(
+                      Container(
                         width: 120,
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8.0),
@@ -245,6 +266,7 @@ String id;
                                 _selectedDate == null
                                     ? 'Date of Birth'
                                     : DateFormat.yMd().format(_selectedDate),
+
                                 //style: TextStyle(fontSize: 15),
                               ),
                               onPressed: _presentDatePicker,
@@ -254,7 +276,7 @@ String id;
                       ),
                     ],
                   ),
-                   const SizedBox(height: 24.0),
+                  const SizedBox(height: 24.0),
                   TextFormField(
                     maxLength: 10,
                     decoration: const InputDecoration(
@@ -265,12 +287,25 @@ String id;
                       labelText: 'Phone Number *',
                       prefixText: '+91',
                     ),
-                    onFieldSubmitted: (_){
+                    onFieldSubmitted: (_) {
                       FocusScope.of(context).requestFocus(_focusnode);
                     },
                     keyboardType: TextInputType.phone,
-                    onSaved: (String value) {
-                      _phoneno = value;
+                    onSaved: (value) {
+                      _editProfile = Profile(
+                          id: null,
+                          name: _editProfile.name,
+                          designation: _editProfile.designation,
+                          department: _editProfile.department,
+                          email: _editProfile.email,
+                          doj: _editProfile.doj,
+                          dob: _editProfile.dob,
+                          panN0: _editProfile.panN0,
+                          aadharNo: _editProfile.aadharNo,
+                          gtustaffcode: _editProfile.gtustaffcode,
+                          mobileno: int.parse(value),
+                          localAdd: _editProfile.localAdd,
+                          perAdd: _editProfile.perAdd);
                     },
                     validator: _validatePhoneNumber,
                   ),
@@ -284,12 +319,25 @@ String id;
                       labelText: 'E-mail',
                     ),
                     focusNode: _focusnode,
-                    onSaved: (String value) {
-                      _email = value;
+                    onSaved: (value) {
+                      _editProfile = Profile(
+                          id: null,
+                          name: _editProfile.name,
+                          designation: _editProfile.designation,
+                          department: _editProfile.department,
+                          email: value,
+                          doj: _editProfile.doj,
+                          dob: _editProfile.dob,
+                          panN0: _editProfile.panN0,
+                          aadharNo: _editProfile.aadharNo,
+                          gtustaffcode: _editProfile.gtustaffcode,
+                          mobileno: _editProfile.mobileno,
+                          localAdd: _editProfile.localAdd,
+                          perAdd: _editProfile.perAdd);
                     },
                     validator: _validateEmail,
                   ),
-                    const SizedBox(height: 24.0),
+                  const SizedBox(height: 24.0),
                   Container(
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(7.0),
@@ -302,9 +350,23 @@ String id;
                         DropdownButton(
                           value: _btn2SelectedVal,
                           hint: Text('Designation'),
-                          onChanged: ((String newValue) {
+                          onChanged: ((value) {
+                            _editProfile = Profile(
+                                id: null,
+                                name: _editProfile.name,
+                                designation: value,
+                                department: _editProfile.department,
+                                email: _editProfile.email,
+                                doj: _editProfile.doj,
+                                dob: _editProfile.dob,
+                                panN0: _editProfile.panN0,
+                                aadharNo: _editProfile.aadharNo,
+                                gtustaffcode: _editProfile.gtustaffcode,
+                                mobileno: _editProfile.mobileno,
+                                localAdd: _editProfile.localAdd,
+                                perAdd: _editProfile.perAdd);
                             setState(() {
-                              _btn2SelectedVal = newValue;
+                              _btn2SelectedVal = value;
                             });
                           }),
                           items: _dropDownMenudesignation,
@@ -313,9 +375,23 @@ String id;
                         DropdownButton(
                           value: _btn2SelectedVal2,
                           hint: Text('Department'),
-                          onChanged: ((String newValue) {
+                          onChanged: ((value) {
+                            _editProfile = Profile(
+                                id: null,
+                                name: _editProfile.name,
+                                designation: _editProfile.designation,
+                                department: value,
+                                email: _editProfile.email,
+                                doj: _editProfile.doj,
+                                dob: _editProfile.dob,
+                                panN0: _editProfile.panN0,
+                                aadharNo: _editProfile.aadharNo,
+                                gtustaffcode: _editProfile.gtustaffcode,
+                                mobileno: _editProfile.mobileno,
+                                localAdd: _editProfile.localAdd,
+                                perAdd: _editProfile.perAdd);
                             setState(() {
-                              _btn2SelectedVal2 = newValue;
+                              _btn2SelectedVal2 = value;
                             });
                           }),
                           items: _dropDownMenudepartment,
@@ -328,55 +404,129 @@ String id;
                     maxLength: 10,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText:
-                          'Enter Your PAN Number',
+                      hintText: 'Enter Your PAN Number',
                       //helperText: 'Keep it short, this is just a demo.',
                       labelText: 'PAN Number',
                     ),
+                    onSaved: (value) {
+                      _editProfile = Profile(
+                          id: null,
+                          name: _editProfile.name,
+                          designation: _editProfile.designation,
+                          department: _editProfile.department,
+                          email: _editProfile.email,
+                          doj: _editProfile.doj,
+                          dob: _editProfile.dob,
+                          panN0: value,
+                          aadharNo: _editProfile.aadharNo,
+                          gtustaffcode: _editProfile.gtustaffcode,
+                          mobileno: _editProfile.mobileno,
+                          localAdd: _editProfile.localAdd,
+                          perAdd: _editProfile.perAdd);
+                    },
                   ),
                   const SizedBox(height: 24.0),
                   TextFormField(
                     maxLength: 12,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText:
-                          'Enter Your Aadhar Number',
+                      hintText: 'Enter Your Aadhar Number',
                       labelText: 'Aadhar Number',
                     ),
-                  ),
-                    const SizedBox(height: 24.0),
-                  TextFormField(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText:
-                          'Enter Your GTU Staff Code',
-                      labelText: 'GTU Staff Code',
-                    ),
+                    onSaved: (value) {
+                      _editProfile = Profile(
+                          id: null,
+                          name: _editProfile.name,
+                          designation: _editProfile.designation,
+                          department: _editProfile.department,
+                          email: _editProfile.email,
+                          doj: _editProfile.doj,
+                          dob: _editProfile.dob,
+                          panN0: _editProfile.panN0,
+                          aadharNo: int.parse(value),
+                          gtustaffcode: _editProfile.gtustaffcode,
+                          mobileno: _editProfile.mobileno,
+                          localAdd: _editProfile.localAdd,
+                          perAdd: _editProfile.perAdd);
+                    },
                   ),
                   const SizedBox(height: 24.0),
                   TextFormField(
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText:
-                          'Enter Your Full local Address',
+                      hintText: 'Enter Your GTU Staff Code',
+                      labelText: 'GTU Staff Code',
+                    ),
+                    onSaved: (value) {
+                      _editProfile = Profile(
+                          id: null,
+                          name: _editProfile.name,
+                          designation: _editProfile.designation,
+                          department: _editProfile.department,
+                          email: _editProfile.email,
+                          doj: _editProfile.doj,
+                          dob: _editProfile.dob,
+                          panN0: _editProfile.panN0,
+                          aadharNo: _editProfile.aadharNo,
+                          gtustaffcode: int.parse(value),
+                          mobileno: _editProfile.mobileno,
+                          localAdd: _editProfile.localAdd,
+                          perAdd: _editProfile.perAdd);
+                    },
+                  ),
+                  const SizedBox(height: 24.0),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Enter Your Full local Address',
                       labelText: 'Local Address',
                     ),
                     maxLines: 3,
+                    onSaved: (value) {
+                      _editProfile = Profile(
+                          id: null,
+                          name: _editProfile.name,
+                          designation: _editProfile.designation,
+                          department: _editProfile.department,
+                          email: _editProfile.email,
+                          doj: _editProfile.doj,
+                          dob: _editProfile.dob,
+                          panN0: _editProfile.panN0,
+                          aadharNo: _editProfile.aadharNo,
+                          gtustaffcode: _editProfile.gtustaffcode,
+                          mobileno: _editProfile.mobileno,
+                          localAdd: value,
+                          perAdd: _editProfile.perAdd);
+                    },
                   ),
                   const SizedBox(height: 24.0),
-                   TextFormField(
+                  TextFormField(
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText:
-                          'Enter Your Full Permanent Address',
+                      hintText: 'Enter Your Full Permanent Address',
                       labelText: 'Permanent Address',
                     ),
-                    onFieldSubmitted: (_){
-                        _handleSubmitted();
+                    onSaved: (value) {
+                      _editProfile = Profile(
+                          id: null,
+                          name: _editProfile.name,
+                          designation: _editProfile.designation,
+                          department: _editProfile.department,
+                          email: _editProfile.email,
+                          doj: _editProfile.doj,
+                          dob: _editProfile.dob,
+                          panN0: _editProfile.panN0,
+                          aadharNo: _editProfile.aadharNo,
+                          gtustaffcode: _editProfile.gtustaffcode,
+                          mobileno: _editProfile.mobileno,
+                          localAdd: _editProfile.localAdd,
+                          perAdd: value);
+                    },
+                    onFieldSubmitted: (_) {
+                      _handleSubmitted();
                     },
                     maxLines: 3,
                   ),
-                  
                   const SizedBox(height: 24.0),
                   Text(
                     '* indicates required field',

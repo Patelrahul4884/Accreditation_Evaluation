@@ -1,11 +1,9 @@
-import 'package:faculty_diary/Screens/main_screen.dart';
 import 'package:flutter/material.dart';
-import './Screens/auth_screen.dart';
+import './screens/auth_screen.dart';
 import 'package:provider/provider.dart';
-import './Providers/auth.dart';
-import './Screens/faculty_profile_Data.dart';
-import './Screens/profile_data.dart';
+import './providers/auth.dart';
 import './Screens/facluty_data_overview.dart';
+import './providers/profiles.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -16,6 +14,9 @@ class MyApp extends StatelessWidget {
       providers:[
         ChangeNotifierProvider.value(
           value:Auth(),
+        ),
+        ChangeNotifierProvider.value(
+          value: Profiles(),
         )
       ],child:Consumer<Auth>(builder: (ctx,auth, _)=>MaterialApp(
         title: 'Your Diary',
