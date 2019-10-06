@@ -67,6 +67,7 @@ class Auth with ChangeNotifier {
       _expiryDate = DateTime.now().add(
         Duration(seconds: int.parse(responseData['expiresIn'])),
       );
+        notifyListeners();
     } catch (error) {
       throw error;
     }

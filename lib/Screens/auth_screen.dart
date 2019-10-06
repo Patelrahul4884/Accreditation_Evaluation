@@ -1,9 +1,10 @@
 import 'dart:math';
 import '../models/http_exception.dart';
-
+import './facluty_data_overview.dart';
 import '../providers/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../screens/facluty_data_overview.dart';
 
 enum AuthMode { Signup, Login }
 
@@ -136,6 +137,7 @@ class _AuthCardState extends State<AuthCard> {
         await Provider.of<Auth>(context, listen: false)
             .signup(_authData['email'], _authData['password']);
       }
+      Navigator.of(context).push(MaterialPageRoute(builder: (ctx)=>DataOverview()),);
     } on HttpException catch (error) {
       var errorMessage = 'Authentication failed';
       if (error.toString().contains('EMAIL_EXISTS')) {

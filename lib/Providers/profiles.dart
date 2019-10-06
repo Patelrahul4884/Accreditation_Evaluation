@@ -8,9 +8,9 @@ class Profiles with ChangeNotifier {
   List<Profile>_data=[
 
   ];
-  void addProfile(Profile profile) {
+  Future<void> addProfile(Profile profile) {
     const url='https://my-project-1534083261246.firebaseio.com/profile.json';
-    http.post(url,body:json.encode({
+   return http.post(url,body:json.encode({
       'name':profile.name,
       'designation':profile.designation,
       'department':profile.department,
@@ -23,9 +23,10 @@ class Profiles with ChangeNotifier {
       'mobileno': profile.mobileno,
         'localAdd': profile.localAdd,
         'perAdd': profile.perAdd,
-    } ));
-    /*final newProfile = Profile(
-      id:DateTime.now().toString(),
+    } )).then((response){
+      print(json.decode(response.body));
+        final newProfile = Profile(
+      id:json.decode(response.body)['name'],
         name: profile.name,
         designation: profile.designation,
         department: profile.department,
@@ -39,6 +40,8 @@ class Profiles with ChangeNotifier {
         localAdd: profile.localAdd,
         perAdd: profile.perAdd);
         _data.add(newProfile);
-        notifyListeners();*/
+        notifyListeners();
+    });
+    
   }
 }

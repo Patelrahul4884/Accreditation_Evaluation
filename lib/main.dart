@@ -3,6 +3,7 @@ import './screens/auth_screen.dart';
 import 'package:provider/provider.dart';
 import './providers/auth.dart';
 import './Screens/facluty_data_overview.dart';
+import './screens/main_screen.dart';
 import './providers/profiles.dart';
 void main() => runApp(MyApp());
 
@@ -24,7 +25,10 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.purple,
           accentColor: Colors.deepOrange,
         ),
-        home:DataOverview(),
+        home:auth.isAuth?DataOverview(): AuthScreen(), 
+        routes: {
+          MainScreen.routeName:(ctx)=>MainScreen(),
+        },
       ),)
       
     );

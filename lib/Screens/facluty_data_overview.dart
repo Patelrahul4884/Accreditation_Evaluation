@@ -4,13 +4,16 @@ import 'package:provider/provider.dart';
 import '../providers/profile.dart';
 import '../providers/profiles.dart';
 import 'package:intl/intl.dart';
+import './main_screen.dart';
 
 class DataOverview extends StatefulWidget {
+   static const routeName='/profile';
   @override
   _DataOverviewState createState() => _DataOverviewState();
 }
 
 class _DataOverviewState extends State<DataOverview> {
+
   final _focusnode = FocusNode();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -50,6 +53,7 @@ class _DataOverviewState extends State<DataOverview> {
     } else {
       form.save();
       Provider.of<Profiles>(context, listen: false).addProfile(_editProfile);
+      Navigator.of(context).pushNamed(MainScreen.routeName);
     }
   }
 
@@ -170,7 +174,7 @@ class _DataOverviewState extends State<DataOverview> {
       });
     });
   }
-
+   static const routeName='/profile-data';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
