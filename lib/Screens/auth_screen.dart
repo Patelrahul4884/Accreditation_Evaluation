@@ -1,11 +1,9 @@
 import 'dart:math';
 import '../models/http_exception.dart';
-import './facluty_data_overview.dart';
+import './faculty_data_input.dart';
 import '../providers/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../screens/facluty_data_overview.dart';
-
 enum AuthMode { Signup, Login }
 
 class AuthScreen extends StatelessWidget {
