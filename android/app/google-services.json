@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1081572346191",
+    "firebase_url": "https://my-project-1534083261246.firebaseio.com",
+    "project_id": "my-project-1534083261246",
+    "storage_bucket": "my-project-1534083261246.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081572346191:android:267a049768cb877d359d3a",
+        "android_client_info": {
+          "package_name": "com.example.faculty_diary"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1081572346191-6hbkspb54k2f3p1305mrjosesdkr5nru.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcx0bcc9CWkVqIs5jWCZUSci4CUmzieVU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1081572346191-6hbkspb54k2f3p1305mrjosesdkr5nru.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

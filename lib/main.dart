@@ -8,6 +8,7 @@ import './widgets/app_drawer.dart';
 import './providers/profiles.dart';
 import './screens/faculty_diary_screen.dart';
 import './TO-DO Features/ui/page_addlist.dart';
+import './TO-DO Features/ui/page_detail.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -22,9 +23,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider.value(
           value: Profiles(),
         ),
-        ChangeNotifierProvider.value(
+       /* ChangeNotifierProvider.value(
           value: NewLists(),
-        )
+        )*/
       ],child:Consumer<Auth>(builder: (ctx,auth, _)=>MaterialApp(
         title: 'Your Diary',
         theme: ThemeData(

@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
+import '../model/sem_subject.dart';
+
 class NewTaskPage extends StatefulWidget {
   @override
   _NewTaskPageState createState() => _NewTaskPageState();
@@ -17,13 +19,18 @@ class _NewTaskPageState extends State<NewTaskPage> {
   Color pickerColor = Color(0xff6633ff);
   Color currentColor = Color(0xff6633ff);
   ValueChanged<Color> onColorChanged;
+  Repository repo = Repository();
+List<String> _states = ["Select SEM"];
+  List<String> _lgas = ["Select Subject"];
+  String _selectedState = "Select SEM";
+  String _selectedLGA = "Select Subject";
   bool _saving = false;
- bool _isLoading=false;
+  bool _isLoading = false;
   bool _autovalidate = false;
   String _connectionStatus = 'Unknown';
-  var _editList=NewList(
-      id:null,
-      listName: '',
+  var _editList = NewList(
+    id: null,
+    listName: '',
   );
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<ConnectivityResult> _connectivitySubscription;
@@ -40,23 +47,24 @@ class _NewTaskPageState extends State<NewTaskPage> {
   changeColor(Color color) {
     setState(() => pickerColor = color);
   }
-   void _handleSubmitted(){
-     final FormState form = _formKey.currentState;
-       if (!form.validate()) {
+
+  void _handleSubmitted() {
+    final FormState form = _formKey.currentState;
+    if (!form.validate()) {
       setState(() {
         _isLoading = false;
       });
-      _autovalidate = true; 
-     showInSnackBar('Please fix the errors before submitting.');
-   }
-      else {
+      _autovalidate = true;
+      showInSnackBar('Please fix the errors before submitting.');
+    } else {
       form.save();
       setState(() {
         _isLoading = true;
       });
     }
-     Provider.of<NewLists>(context,listen: false).addList(_editList);
-   }
+    Provider.of<NewLists>(context, listen: false).addList(_editList);
+  }
+
   void showInSnackBar(String value) {
     _scaffoldKey.currentState?.removeCurrentSnackBar();
 
@@ -76,6 +84,7 @@ class _NewTaskPageState extends State<NewTaskPage> {
 
   @override
   void initState() {
+     _states = List.from(_states)..addAll(repo.getStates());
     super.initState();
     initConnectivity();
     _connectivitySubscription =
@@ -114,67 +123,142 @@ class _NewTaskPageState extends State<NewTaskPage> {
     }
   }
 
+//DropDown
+  /*static const sem = <String>[
+    'SEM 5',
+    'SEM 6',
+    'SEM 7',
+  ];
+  final List<DropdownMenuItem<String>> _dropDownMenuSEM = sem
+      .map(
+        (String value) => DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        ),
+      )
+      .toList();*/
+     void _onSelectedState(String value) {
+    setState(() {
+      _selectedLGA = "Choose";
+      _lgas = ["Choose"];
+      _selectedState = value;
+      _lgas = List.from(_lgas)..addAll(repo.getLocalByState(value));
+    });
+  }
+     void _onSelectedLGA(String value) {
+    setState(() => _selectedLGA = value);
+  }
+
+ // String _selectedvalue;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
-      body: Form(
-                key: _formKey,
-                autovalidate: _autovalidate,
-              child: ModalProgressHUD(
-            child: Stack(
-              children: <Widget>[
-                _getToolbar(context),
-                Container(
-                  child: Column(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(top: 100.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: <Widget>[
-                            Expanded(
-                              flex: 1,
-                              child: Container(
-                                color: Colors.grey,
-                                height: 1.5,
-                              ),
+        key: _scaffoldKey,
+        body: Form(
+          key: _formKey,
+          autovalidate: _autovalidate,
+          child: Theme(
+            data: Theme.of(context).copyWith(canvasColor: currentColor),
+            child: ModalProgressHUD(
+                child: Stack(
+                  children: <Widget>[
+                    _getToolbar(context),
+                    Container(
+                      child: Column(
+                        children: <Widget>[
+                          Padding(
+                            padding: EdgeInsets.only(top: 100.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                Expanded(
+                                  flex: 1,
+                                  child: Container(
+                                    color: Colors.grey,
+                                    height: 1.5,
+                                  ),
+                                ),
+                                Expanded(
+                                    flex: 2,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: <Widget>[
+                                        Text(
+                                          'New',
+                                          style: new TextStyle(
+                                              fontSize: 30.0,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          'List',
+                                          style: new TextStyle(
+                                              fontSize: 28.0,
+                                              color: Colors.grey),
+                                        )
+                                      ],
+                                    )),
+                                Expanded(
+                                  flex: 1,
+                                  child: Container(
+                                    color: Colors.grey,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Expanded(
-                                flex: 2,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(
+                                top: 50.0, left: 20.0, right: 20.0),
+                            child: Column(
+                              children: <Widget>[
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
-                                    Text(
-                                      'New',
-                                      style: new TextStyle(
-                                          fontSize: 30.0,
-                                          fontWeight: FontWeight.bold),
+                                  /*  DropdownButton(
+                                      value: _selectedvalue,
+                                      hint: Text('Select SEM'),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _selectedvalue = value;
+                                        });
+                                      },
+                                      items: _dropDownMenuSEM,
+                                    ),*/
+                                    DropdownButton<String>(
+                                      
+                                      items:
+                                          _states.map((String dropDownStringItem) {
+                                        return DropdownMenuItem<String>(
+                                          value: dropDownStringItem,
+                                          child: Text(dropDownStringItem),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) =>
+                                          _onSelectedState(value),
+                                      value: _selectedState,
                                     ),
-                                    Text(
-                                      'List',
-                                      style: new TextStyle(
-                                          fontSize: 28.0, color: Colors.grey),
-                                    )
+                                    DropdownButton<String>(
+                                      
+                                      items: _lgas
+                                          .map((String dropDownStringItem) {
+                                        return DropdownMenuItem<String>(
+                                          value: dropDownStringItem,
+                                          child: Text(dropDownStringItem),
+                                        );
+                                      }).toList(),
+                                      //onChanged: (value) => print(value),
+                                      onChanged: (value) =>
+                                          _onSelectedLGA(value),
+                                      value: _selectedLGA,
+                                    ),
                                   ],
-                                )),
-                            Expanded(
-                              flex: 1,
-                              child: Container(
-                                color: Colors.grey,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding:
-                            EdgeInsets.only(top: 50.0, left: 20.0, right: 20.0),
-                        child: Column(
-                          children: <Widget>[
-                            TextFormField(
+                                ),
+                                /* TextFormField(
                               decoration: InputDecoration(
                                   border: new OutlineInputBorder(
                                       borderSide:
@@ -202,95 +286,101 @@ class _NewTaskPageState extends State<NewTaskPage> {
                                   listName: value,
                                 );
                               },
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(bottom: 10.0),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                ButtonTheme(
-                                  //minWidth: double.infinity,
+                            ),*/
+                                Padding(
+                                  padding: EdgeInsets.only(bottom: 10.0),
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    ButtonTheme(
+                                      //minWidth: double.infinity,
 
-                                  child: RaisedButton(
-                                    elevation: 3.0,
-                                    onPressed: () {
-                                      pickerColor = currentColor;
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text('Pick a color!'),
-                                            content: SingleChildScrollView(
-                                              child: ColorPicker(
-                                                pickerColor: pickerColor,
-                                                onColorChanged: changeColor,
-                                                enableLabel: true,
-                                                colorPickerWidth: 500.0,
-                                                pickerAreaHeightPercent: 0.7,
-                                              ),
-                                            ),
-                                            actions: <Widget>[
-                                              FlatButton(
-                                                child: Text('Got it'),
-                                                onPressed: () {
-                                                  setState(() =>
-                                                      currentColor = pickerColor);
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                            ],
+                                      child: RaisedButton(
+                                        elevation: 3.0,
+                                        onPressed: () {
+                                          pickerColor = currentColor;
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title:
+                                                    const Text('Pick a color!'),
+                                                content: SingleChildScrollView(
+                                                  child: ColorPicker(
+                                                    pickerColor: pickerColor,
+                                                    onColorChanged: changeColor,
+                                                    enableLabel: true,
+                                                    colorPickerWidth: 500.0,
+                                                    pickerAreaHeightPercent:
+                                                        0.7,
+                                                  ),
+                                                ),
+                                                actions: <Widget>[
+                                                  FlatButton(
+                                                    child: Text('Got it'),
+                                                    onPressed: () {
+                                                      setState(() =>
+                                                          currentColor =
+                                                              pickerColor);
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                  ),
+                                                ],
+                                              );
+                                            },
                                           );
                                         },
-                                      );
-                                    },
-                                    child: Text('Card color'),
-                                    color: currentColor,
-                                    textColor: const Color(0xffffffff),
-                                  ),
-                                ),
-                                RaisedButton(
-                                  child: const Text(
-                                    'Add',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  color: Colors.blue,
-                                  elevation: 4.0,
-                                  splashColor: Colors.deepPurple,
-                                  onPressed: _handleSubmitted,
+                                        child: Text('Card color'),
+                                        color: currentColor,
+                                        textColor: const Color(0xffffffff),
+                                      ),
+                                    ),
+                                    RaisedButton(
+                                      child: const Text(
+                                        'Add',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      color: currentColor,
+                                      elevation: 4.0,
+                                      splashColor: Colors.deepPurple,
+                                      onPressed: _handleSubmitted,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            inAsyncCall: _saving),
-      ),
-    );
+                inAsyncCall: _saving),
+          ),
+        ));
   }
 }
-class NewList with ChangeNotifier{
+
+class NewList with ChangeNotifier {
   final String id;
   final String listName;
 
-  NewList({this.id,this.listName});
+  NewList({this.id, this.listName});
 }
-class NewLists with ChangeNotifier{
-  List<NewList>_listData=[];
-  void addList(NewList newlist){
-    const url='https://my-project-1534083261246.firebaseio.com/list.json';
-    http.post(url,body:json.encode({
-      'listName':newlist.listName,
-    }));
-    final addlist=NewList(
-      listName: newlist.listName,
-      id: DateTime.now().toString()
-    );
+
+class NewLists with ChangeNotifier {
+  List<NewList> _listData = [];
+  void addList(NewList newlist) {
+    const url = 'https://my-project-1534083261246.firebaseio.com/list.json';
+    http.post(url,
+        body: json.encode({
+          'listName': newlist.listName,
+        }));
+    final addlist =
+        NewList(listName: newlist.listName, id: DateTime.now().toString());
     _listData.add(addlist);
     notifyListeners();
   }
