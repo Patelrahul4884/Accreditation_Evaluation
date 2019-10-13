@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +13,9 @@ import 'package:provider/provider.dart';
 import '../model/sem_subject.dart';
 
 class NewTaskPage extends StatefulWidget {
+  final FirebaseUser user;
+
+  NewTaskPage({Key key, this.user}) : super(key: key);
   @override
   _NewTaskPageState createState() => _NewTaskPageState();
 }
@@ -20,7 +25,7 @@ class _NewTaskPageState extends State<NewTaskPage> {
   Color currentColor = Color(0xff6633ff);
   ValueChanged<Color> onColorChanged;
   Repository repo = Repository();
-List<String> _states = ["Select SEM"];
+  List<String> _states = ["Select SEM"];
   List<String> _lgas = ["Select Subject"];
   String _selectedState = "Select SEM";
   String _selectedLGA = "Select Subject";
@@ -30,13 +35,13 @@ List<String> _states = ["Select SEM"];
   String _connectionStatus = 'Unknown';
   var _editList = NewList(
     id: null,
-    listName: '',
+    sem: '',
+    subject: '',
   );
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<ConnectivityResult> _connectivitySubscription;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  TextEditingController listNameController = TextEditingController();
   Container _getToolbar(BuildContext context) {
     return Container(
       margin: EdgeInsets.only(left: 10.0, top: 40.0),
@@ -84,7 +89,7 @@ List<String> _states = ["Select SEM"];
 
   @override
   void initState() {
-     _states = List.from(_states)..addAll(repo.getStates());
+    _states = List.from(_states)..addAll(repo.getStates());
     super.initState();
     initConnectivity();
     _connectivitySubscription =
@@ -117,39 +122,34 @@ List<String> _states = ["Select SEM"];
     });
   }
 
-  String _validateName(String value) {
-    if (value.isEmpty) {
-      return 'Please Add list';
-    }
-  }
-
-//DropDown
-  /*static const sem = <String>[
-    'SEM 5',
-    'SEM 6',
-    'SEM 7',
-  ];
-  final List<DropdownMenuItem<String>> _dropDownMenuSEM = sem
-      .map(
-        (String value) => DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        ),
-      )
-      .toList();*/
-     void _onSelectedState(String value) {
+  void addToFirebase() async {
     setState(() {
-      _selectedLGA = "Choose";
-      _lgas = ["Choose"];
+      _saving = true;
+    });
+        print(_connectionStatus);
+        if(_connectionStatus == "ConnectivityResult.none"){
+      showInSnackBar("No internet connection currently available");
+      setState(() {
+        _saving = false;
+      });
+    }
+    }
+  //Drop down
+  void _onSelectedState(String value) {
+ _editList=NewList(id: null,sem: value,subject: _editList.subject);
+    setState(() {
+      _selectedLGA = "Select Subject";
+      _lgas = ["Select Subject"];
       _selectedState = value;
       _lgas = List.from(_lgas)..addAll(repo.getLocalByState(value));
     });
   }
-     void _onSelectedLGA(String value) {
+
+  void _onSelectedLGA(String value) {
+    _editList=NewList(id: null,sem:_editList.sem,subject: value);
     setState(() => _selectedLGA = value);
   }
 
- // String _selectedvalue;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -219,31 +219,20 @@ List<String> _states = ["Select SEM"];
                                       MainAxisAlignment.spaceAround,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
-                                  /*  DropdownButton(
-                                      value: _selectedvalue,
-                                      hint: Text('Select SEM'),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _selectedvalue = value;
-                                        });
-                                      },
-                                      items: _dropDownMenuSEM,
-                                    ),*/
                                     DropdownButton<String>(
-                                      
-                                      items:
-                                          _states.map((String dropDownStringItem) {
+                                      items: _states
+                                          .map((String dropDownStringItem) {
                                         return DropdownMenuItem<String>(
                                           value: dropDownStringItem,
                                           child: Text(dropDownStringItem),
                                         );
                                       }).toList(),
                                       onChanged: (value) =>
+                                     
                                           _onSelectedState(value),
                                       value: _selectedState,
                                     ),
                                     DropdownButton<String>(
-                                      
                                       items: _lgas
                                           .map((String dropDownStringItem) {
                                         return DropdownMenuItem<String>(
@@ -258,41 +247,12 @@ List<String> _states = ["Select SEM"];
                                     ),
                                   ],
                                 ),
-                                /* TextFormField(
-                              decoration: InputDecoration(
-                                  border: new OutlineInputBorder(
-                                      borderSide:
-                                          new BorderSide(color: Colors.teal)),
-                                  labelText: "List name",
-                                  contentPadding: EdgeInsets.only(
-                                      left: 16.0,
-                                      top: 20.0,
-                                      right: 16.0,
-                                      bottom: 5.0)),
-                              controller: listNameController,
-                              autofocus: true,
-                              style: TextStyle(
-                                fontSize: 22.0,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              keyboardType: TextInputType.text,
-                              textCapitalization: TextCapitalization.sentences,
-                              maxLength: 20,
-                              validator: _validateName,
-                              onSaved: (value){
-                                _editList=NewList(
-                                  id: null,
-                                  listName: value,
-                                );
-                              },
-                            ),*/
                                 Padding(
                                   padding: EdgeInsets.only(bottom: 10.0),
                                 ),
                                 Row(
                                   mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceAround,
                                   children: <Widget>[
                                     ButtonTheme(
                                       //minWidth: double.infinity,
@@ -366,9 +326,10 @@ List<String> _states = ["Select SEM"];
 
 class NewList with ChangeNotifier {
   final String id;
-  final String listName;
+  final String sem;
+  final String subject;
 
-  NewList({this.id, this.listName});
+  NewList({this.id, this.sem, this.subject});
 }
 
 class NewLists with ChangeNotifier {
@@ -376,11 +337,11 @@ class NewLists with ChangeNotifier {
   void addList(NewList newlist) {
     const url = 'https://my-project-1534083261246.firebaseio.com/list.json';
     http.post(url,
-        body: json.encode({
-          'listName': newlist.listName,
-        }));
-    final addlist =
-        NewList(listName: newlist.listName, id: DateTime.now().toString());
+        body: json.encode({'sem': newlist.sem, 'subject': newlist.subject}));
+    final addlist = NewList(
+        sem: newlist.sem,
+        subject: newlist.subject,
+        id: DateTime.now().toString());
     _listData.add(addlist);
     notifyListeners();
   }

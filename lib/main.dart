@@ -23,9 +23,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider.value(
           value: Profiles(),
         ),
-       /* ChangeNotifierProvider.value(
+        ChangeNotifierProvider.value(
           value: NewLists(),
-        )*/
+        )
       ],child:Consumer<Auth>(builder: (ctx,auth, _)=>MaterialApp(
         title: 'Your Diary',
         theme: ThemeData(
