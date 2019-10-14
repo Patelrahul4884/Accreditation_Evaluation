@@ -9,6 +9,7 @@ import './providers/profiles.dart';
 import './screens/faculty_diary_screen.dart';
 import './TO-DO Features/ui/page_addlist.dart';
 import './TO-DO Features/ui/page_detail.dart';
+import './TO-DO Features/ui/page_task.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.purple,
           accentColor: Colors.deepOrange,
         ),
-        home:auth.isAuth?AppDrawer(): NewTaskPage(), 
+        home:auth.isAuth?AppDrawer(): TaskPage(), 
         routes: {
           AppDrawer.routeName:(ctx)=>AppDrawer(),
           DiaryPage.routeName:(ctx)=>DiaryPage(),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import './profile.dart';
 import 'package:http/http.dart' as http;
 
-
 class Profiles with ChangeNotifier {
   List<Profile>_data=[
 

@@ -4,6 +4,9 @@ import './faculty_data_input.dart';
 import '../providers/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/userManagement.dart';
 enum AuthMode { Signup, Login }
 
 class AuthScreen extends StatelessWidget {
@@ -134,8 +137,12 @@ class _AuthCardState extends State<AuthCard> {
         // Sign user up
         await Provider.of<Auth>(context, listen: false)
             .signup(_authData['email'], _authData['password']);
+        FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: _authData['email'], password: _authData['password']).then((signedInUser){
+              UserManagement().storeNewUser(signedInUser, context);
+            });
       }
-      Navigator.of(context).push(MaterialPageRoute(builder: (ctx)=>DataOverview()),);
+      //Navigator.of(context).push(MaterialPageRoute(builder: (ctx)=>DataOverview()),);
     } on HttpException catch (error) {
       var errorMessage = 'Authentication failed';
       if (error.toString().contains('EMAIL_EXISTS')) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter/services.dart';
@@ -42,6 +42,7 @@ class _NewTaskPageState extends State<NewTaskPage> {
   StreamSubscription<ConnectivityResult> _connectivitySubscription;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  TextEditingController listNameController = new TextEditingController();
   Container _getToolbar(BuildContext context) {
     return Container(
       margin: EdgeInsets.only(left: 10.0, top: 40.0),
@@ -63,6 +64,7 @@ class _NewTaskPageState extends State<NewTaskPage> {
       showInSnackBar('Please fix the errors before submitting.');
     } else {
       form.save();
+      // addToFirebase();
       setState(() {
         _isLoading = true;
       });
@@ -126,17 +128,54 @@ class _NewTaskPageState extends State<NewTaskPage> {
     setState(() {
       _saving = true;
     });
-        print(_connectionStatus);
-        if(_connectionStatus == "ConnectivityResult.none"){
+    print(_connectionStatus);
+    if (_connectionStatus == "ConnectivityResult.none") {
       showInSnackBar("No internet connection currently available");
       setState(() {
         _saving = false;
       });
+    } else {
+      bool isExist = false;
+
+      QuerySnapshot query =
+          await Firestore.instance.collection(widget.user.uid).getDocuments();
+
+      query.documents.forEach((doc) {
+        if (_selectedState == doc.documentID) {
+          isExist = true;
+        }
+      });
+
+      if (isExist == false && _selectedState.isNotEmpty) {
+        await Firestore.instance
+            .collection(widget.user.uid)
+            .document(_selectedState.trim())
+            .setData({
+          "color": currentColor.value.toString(),
+          "date": DateTime.now().millisecondsSinceEpoch
+        });
+
+        listNameController.clear();
+        Navigator.of(context).pop();
+      }
+      if (isExist == true) {
+        showInSnackBar("This list already exists");
+        setState(() {
+          _saving = false;
+        });
+      }
+      if (_selectedState.isEmpty) {
+        showInSnackBar("Please enter a name");
+        setState(() {
+          _saving = false;
+        });
+      }
     }
-    }
+  }
+
   //Drop down
   void _onSelectedState(String value) {
- _editList=NewList(id: null,sem: value,subject: _editList.subject);
+    _editList = NewList(id: null, sem: value, subject: _editList.subject);
     setState(() {
       _selectedLGA = "Select Subject";
       _lgas = ["Select Subject"];
@@ -146,7 +185,7 @@ class _NewTaskPageState extends State<NewTaskPage> {
   }
 
   void _onSelectedLGA(String value) {
-    _editList=NewList(id: null,sem:_editList.sem,subject: value);
+    _editList = NewList(id: null, sem: _editList.sem, subject: value);
     setState(() => _selectedLGA = value);
   }
 
@@ -228,7 +267,6 @@ class _NewTaskPageState extends State<NewTaskPage> {
                                         );
                                       }).toList(),
                                       onChanged: (value) =>
-                                     
                                           _onSelectedState(value),
                                       value: _selectedState,
                                     ),
@@ -334,7 +372,28 @@ class NewList with ChangeNotifier {
 
 class NewLists with ChangeNotifier {
   List<NewList> _listData = [];
-  void addList(NewList newlist) {
+  Future<void> fetchAndSetList() async {
+    const url = 'https://my-project-1534083261246.firebaseio.com/list.json';
+    try {
+      final response = await http.get(url);
+      final extractedData = json.decode(response.body)as Map<String,dynamic>;
+      final List<NewList>loadedList=[];
+      extractedData.forEach((listId,listData){
+         loadedList.add(NewList(
+           id: listId,
+           sem: listData['sem'],
+           subject: listData['subject'],
+         ));
+      });
+      _listData=loadedList;
+      notifyListeners();
+      //print(json.decode(response.body));  
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  Future<void> addList(NewList newlist) async {
     const url = 'https://my-project-1534083261246.firebaseio.com/list.json';
     http.post(url,
         body: json.encode({'sem': newlist.sem, 'subject': newlist.subject}));
